@@ -22,6 +22,7 @@ export default function App() {
   const [category, setCategory] = useState<Category | null>(null);
   const [showSubchips, setShowSubchips] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const [autoStart, setAutoStart] = useState(false);
 
   const dockRef = useRef<HTMLDivElement>(null);
   const chat = useChatEngine();
@@ -198,14 +199,25 @@ export default function App() {
               setView("chips");
             }}
             onPickChip={pickTopChip}
-            onVoiceStart={() => setView("voicechat")} // ✅ dabar jungia voicechat
+            onVoiceStart={() => {
+              setAutoStart(true);
+
+              // 👇 vietoj iškart setView("voicechat") — laukiam 200ms
+              setTimeout(() => {
+                setView("voicechat");
+              }, 200);
+            }}
           />
         </Modal.Screen>
 
         <Modal.Screen show={view === "voicechat"}>
-          <VoiceChatScreen onBack={() => setView("chips")} onKeyboard={() => setView("chat")} />
+          <VoiceChatScreen
+            autoStart={autoStart}
+            initialQuestion="Hello, what are you looking for today?"
+            onBack={() => setView("chips")}
+            onKeyboard={() => setView("chat")}
+          />
         </Modal.Screen>
-
         <Modal.Screen show={view === "feedback"}>
           <FeedbackScreen onSubmit={() => setView("feedback-filled")} />
         </Modal.Screen>

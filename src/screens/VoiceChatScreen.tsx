@@ -7,15 +7,21 @@ import { useSpeechToText } from "../hooks/useSpeechToText";
 type VoiceChatScreenProps = {
   onKeyboard: () => void;
   onBack?: () => void;
+  autoStart?: boolean;
+  initialQuestion?: string;
 };
 
 const VOICE_QUESTIONS = [
-  "Question 1: Do you prefer cream or gel?",
-  "Question 2: Any allergies?",
-  "Question 3: Do you shop online or in store?",
+  "Question nr.1: Do you prefer vegan friendly options or have some specific needs to help us find you the best product?",
+  "Question nr.2: Do you have any alergies or any medical problems?",
+  "Question nr.3: Do you prefer shopping online or do you prefer going to the store?",
 ];
 
-export default function VoiceChatScreen({ onKeyboard }: VoiceChatScreenProps) {
+export default function VoiceChatScreen({
+  onKeyboard,
+  autoStart,
+  initialQuestion = "Hello, what are you looking for today?",
+}: VoiceChatScreenProps) {
   const chat = useChatEngine();
   const logRef = useRef<HTMLDivElement>(null);
   useChatScroll(logRef, chat.messages);
@@ -23,18 +29,30 @@ export default function VoiceChatScreen({ onKeyboard }: VoiceChatScreenProps) {
   const { mode, finalText, interimText, toggleListening } = useSpeechToText();
 
   const [stepIndex, setStepIndex] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState("Hello, what are you looking for today?");
+  const [currentQuestion, setCurrentQuestion] = useState(initialQuestion);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showNoInput, setShowNoInput] = useState(false);
   const [hadListening, setHadListening] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  // Kai gaunam galutinį tekstą
+  // Auto start mic
+  useEffect(() => {
+    if (autoStart) {
+      const t = setTimeout(() => {
+        toggleListening();
+      }, 50);
+      return () => clearTimeout(t);
+    }
+  }, [autoStart]);
+
+  // Handle finalText → pereinam prie kito klausimo
   useEffect(() => {
     if (!finalText) return;
 
     setShowNoInput(false);
-
     if (finalText.trim().length === 0) return;
+
+    setHasSubmitted(true);
 
     if (stepIndex < VOICE_QUESTIONS.length) {
       chat.addMessage({
@@ -47,12 +65,6 @@ export default function VoiceChatScreen({ onKeyboard }: VoiceChatScreenProps) {
       setIsGenerating(true);
       const timeout = setTimeout(() => {
         const aiQ = VOICE_QUESTIONS[stepIndex];
-        chat.addMessage({
-          id: `ai-q-${Date.now()}`,
-          role: "assistant",
-          kind: "text",
-          text: aiQ,
-        });
         setCurrentQuestion(aiQ);
         setStepIndex((s) => s + 1);
         setIsGenerating(false);
@@ -73,22 +85,22 @@ export default function VoiceChatScreen({ onKeyboard }: VoiceChatScreenProps) {
     }
   }, [finalText]);
 
-  // Stebim mic būseną
+  // Track mic state
   useEffect(() => {
     if (mode === "listening") {
       setHadListening(true);
+      setShowNoInput(false);
     }
-
     if (mode === "idle" && hadListening && !finalText && !interimText) {
       setShowNoInput(true);
-      setHadListening(false); // resetinam
+      setHadListening(false);
     }
   }, [mode, finalText, interimText, hadListening]);
 
   return (
     <div className={`voice-chat-screen ${mode === "listening" ? "listening" : ""}`}>
-      {/* HEADER */}
-      {!isGenerating && !showNoInput && (
+      {/* HEADER: tik kai klausom */}
+      {!showNoInput && mode === "listening" && !isGenerating && (
         <div className="vc-header">
           <div className="vc-header-line" />
           <h2 className="vc-question">{currentQuestion}</h2>
@@ -97,38 +109,47 @@ export default function VoiceChatScreen({ onKeyboard }: VoiceChatScreenProps) {
 
       {/* BODY */}
       <div className="vc-body" ref={logRef}>
-        {interimText && !isGenerating && !showNoInput && <div className="vc-answer">{interimText}</div>}
+        {!showNoInput ? (
+          <>
+            {/* Instrukcija + klausimas kaip AI atsakymas */}
+            {hasSubmitted && !isGenerating && mode !== "listening" && (
+              <>
+                <p className="vc-instruction">Answer the question or input any information you wish</p>
+                <div className="vc-answer vc-answer--ai">{currentQuestion}</div>
+              </>
+            )}
 
-        {showNoInput && (
-          <div className="vc-error">
-            <p>Couldn’t hear you. Please try again.</p>
-          </div>
-        )}
+            {/* Interim klausymo metu */}
+            {mode === "listening" && interimText && <div className="vc-answer vc-answer--user">{interimText}</div>}
 
-        {isGenerating && finalText && (
-          <div className="vc-generating">
-            <img src="/img/generating-answer.svg" alt="Generating" />
-            <p>Generating answer…</p>
+            {/* Generating */}
+            {isGenerating && (
+              <div className="vc-generating">
+                <img src="/img/generating-answer.svg" alt="Generating" />
+                <p>Generating answer…</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="vc-noinput-overlay">
+            <p className="vc-noinput-title">Couldn’t hear you! Can you repeat?</p>
+            <p className="vc-noinput-sub">Tap to type · Hold to speak</p>
           </div>
         )}
       </div>
 
-      {/* MIC ZONA virš footerio */}
+      {/* MIC */}
       {!isGenerating && (
         <div className="vc-mic-wrap">
           <button className={`vc-mic ${mode === "listening" ? "is-listening" : ""}`} onClick={toggleListening}>
             <img src="/img/voice-sphere.svg" alt="Mic" />
-            {mode === "listening" && (
-              <>
-                <span className="vc-status">LISTENING...</span>
-                <div className="vc-ripples"></div>
-              </>
-            )}
+            {mode === "listening" && <div className="vc-ripples"></div>}
           </button>
+          {mode === "listening" && <span className="vc-status">LISTENING...</span>}
         </div>
       )}
 
-      {/* FOOTER su iconomis */}
+      {/* FOOTER */}
       <div className="vc-footer">
         <button className="footer-btn left">
           <img src="/img/speaker.svg" alt="Speaker" />
