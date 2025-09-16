@@ -1,0 +1,60 @@
+/* AI powered search action button */
+
+.ai-fab {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  /* vietoj top: ... -> kotvuojam prie apačios + safe area */
+  bottom: max(70px, calc(env(safe-area-inset-bottom, 0) + 20px));
+  /* senų Safari fallback (nebūtina, bet saugu) */
+  bottom: max(70px, calc(constant(safe-area-inset-bottom, 0) + 20px));
+
+  height: 3rem;
+  padding: 0.75rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 1.5rem; /* Half of height will give you the pill look */
+  border: none;
+  background: var(--brand-blue);
+  color: #fff;
+  font-weight: 500;
+  font-size: 1rem;
+  box-shadow: 0 0 30px 1px var(--elev-50);
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+
+  z-index: 1002;
+}
+
+.ai-fab:hover {
+  background: #2d46d9;
+  box-shadow: 0 0 35px 3px var(--elev-50);
+}
+
+.ai-fab__label {
+  line-height: 1;
+}
+
+.ai-fab__icon img {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+.ai-fab__icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* notification badge */
+.notif-dot {
+  position: absolute;
+  top: -1rem; /* pakoreguok pagal dizainą */
+  right: -1rem; /* pakoreguok pagal dizainą */
+  width: 15px;
+  height: 15px;
+  background: #ff7344;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}

@@ -1,0 +1,691 @@
+/* ==========================================================================
+   PRODUCTS STRIP
+   Struktūra:
+   1) Konteineriai
+   2) Header/Footer
+   3) Horizontalaus scroll eilė
+   4) Produktų kortelė
+   5) CTA mygtukai (single product)
+   6) Follow-up tekstas
+   7) Success blokas (po “Add to cart”)
+   8) Overlay/Pointer events fix
+   9) Desktop override’ai
+   ========================================================================== */
+
+/* === 1) Konteineriai ===================================================== */
+
+/* Pagrindinis host konteineris, ant kurio “sėdi” bubble strip */
+.products-wrap {
+  width: 100%;
+  margin: 0 auto;
+  position: relative; /* svarbu: reference point absolute children’ui */
+}
+
+/* “Burbulas” – sėdi ant .products-wrap */
+.products-strip {
+  position: absolute; /* bubble visur (mobile + desktop) */
+  left: 0;
+  width: 100%;
+  padding: 0 0 0.5rem 0; /* 8px → 0.5rem */
+  z-index: 99;
+  pointer-events: none;
+}
+
+.products-strip > * {
+  pointer-events: auto;
+}
+
+/* Kai daug kortelių – ištempiam per gutters (lyg chato burbulas) */
+.products-scroll.is-multiple {
+  margin-left: -1.75rem;
+  padding-left: 1.75rem;
+  margin-right: -1.75rem;
+  padding-right: 1.75rem;
+}
+
+/* Bendras turinio “konteineris” (naudojamas header/cta/success) */
+.products-contain {
+  /* mobile – full width; desktop apribosime vėliau */
+}
+
+/* === 2) Header / Footer =================================================== */
+
+.products-header,
+.products-footer {
+  pointer-events: auto;
+  max-width: min(45rem, 100%); /* 720px → 45rem */
+  margin: 0.25rem 0 0.5rem; /* 4px 0 8px */
+  color: #fcfcfc;
+  line-height: 1.5;
+}
+
+/* === 3) Horizontalaus scroll eilė ======================================== */
+
+.products-scroll {
+  display: flex;
+  gap: 1rem; /* 16px → 1rem */
+  overflow-x: auto;
+  touch-action: pan-x pan-y;
+  overflow-y: visible;
+  padding-top: 0.5rem; /* 8px → 0.5rem */
+  pointer-events: auto;
+  cursor: grab;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain; /* laikom horizontalų perteklių savyje */
+  overscroll-behavior-y: auto; /* leisk vertikaliam pratekėti į chat-log */
+}
+.products-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* === 4) Produktų kortelė ================================================= */
+
+.product-card {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 10rem; /* 160px */
+  height: 17.875rem; /* 286px */
+  border-radius: 0.5rem; /* 8px */
+  background: rgba(252, 252, 252, 0.05);
+  overflow: hidden;
+  margin-bottom: 0.5rem; /* 8px */
+  transition: transform 0.25s ease;
+}
+
+.product-card .image-wrap {
+  position: relative;
+  width: 10rem; /* 160px */
+  height: 11.125rem; /* 178px */
+}
+
+.product-card .product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.625rem; /* 10px */
+}
+
+/* Reactions (top-right) */
+.product-card .reactions {
+  position: absolute;
+  top: 0.5rem; /* 8px */
+  right: 0.5rem; /* 8px */
+  display: flex;
+  gap: 0.5rem; /* 8px */
+  z-index: 10;
+}
+
+.product-card .reactions .circle {
+  width: 1.75rem; /* 28px */
+  height: 1.75rem; /* 28px */
+  border-radius: 1rem; /* 16px */
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+
+  /* 🔹 visada pusiau permatomi */
+  background: rgba(252, 252, 252, 0.8);
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+/* Hover – paryškėja tik jei kortelė nėra muted */
+.product-card:not(.is-muted) .reactions .circle:hover {
+  opacity: 1;
+}
+
+/* Jei kortelė muted → hover nedaro nieko */
+.product-card.is-muted .reactions .circle:hover {
+  opacity: 0.45; /* paliekam pritemdytą */
+}
+
+/* Add button (bottom-right) */
+.product-card .add-btn {
+  position: absolute;
+  right: 0.5rem; /* 8px */
+  bottom: 0.5rem; /* 8px */
+  width: 2rem; /* 32px */
+  height: 2rem; /* 32px */
+  border-radius: 50%;
+  background: rgba(252, 252, 252, 1);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* Content */
+.product-card .content {
+  padding: 1rem 0.5rem 0.75rem; /* 16px 8px 12px */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* 12px */
+  color: #fcfcfc;
+}
+.product-card .price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.product-card .price {
+  font-weight: 700;
+  font-size: 1rem; /* 16px */
+  line-height: 130%;
+}
+.product-card .reviews {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem; /* 4px */
+  font-size: 0.875rem; /* 14px */
+}
+.product-card .reviews img {
+  width: 0.875rem; /* 14px */
+  height: 0.875rem;
+}
+.product-card .reviews .reviews-count {
+  color: #fcfcfc;
+  text-decoration: underline;
+}
+.product-card .title {
+  font-size: 1rem; /* 16px */
+  line-height: 150%;
+  font-weight: 400;
+  margin: 0;
+  color: #fcfcfc;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.circle.circle--fav.is-fav {
+  background: #afbafb;
+}
+
+/* Kortelės būsena */
+.product-card.is-muted {
+  /* Nebedėk opacity čia */
+}
+
+/* Užgesinam viską, kas yra kortelės viduje, išskyrus .reactions */
+.product-card.is-muted .product-img,
+.product-card.is-muted .circle--fav,
+.product-card.is-muted .add-btn,
+.product-card.is-muted .content {
+  opacity: 0.45;
+  transition: opacity 0.25s ease;
+}
+
+/* Dislike mygtukas visada ryškus */
+.product-card.is-muted .reactions .circle[aria-label="Dislike"] {
+  opacity: 1;
+  background: rgba(252, 252, 252, 1);
+  cursor: pointer;
+  z-index: 20;
+}
+/* === 5) CTA mygtukai (single product) ==================================== */
+
+.products-cta {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* 12px */
+}
+
+.products-cta .cta-q {
+  margin: 0;
+  font-size: 1rem; /* 16px */
+  line-height: 150%;
+  color: #fcfcfc;
+}
+
+.cta-buttons {
+  pointer-events: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 24rem;
+
+  margin-top: 0.75rem; /* 12px */
+}
+
+/* Primary button – Add to cart */
+.cta-buttons .btn-primary {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.75rem 2rem; /* 12px 32px */
+  height: 3rem; /* 48px */
+  background: #fcfcfc;
+  color: #02092e;
+  font-family: "Satoshi", sans-serif;
+  font-weight: 700;
+  font-size: 1rem; /* 16px */
+  line-height: 130%;
+  border: none;
+  border-radius: 2.219rem; /* 35.5px */
+  box-shadow: 0 0 5px 2px #dde3ff;
+  cursor: pointer;
+  z-index: 0;
+}
+
+/* Secondary button – Not now */
+.cta-buttons .btn-secondary {
+  flex-grow: 0;
+  min-width: 7.5rem; /* 120px */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.75rem 2rem; /* 12px 32px */
+  height: 3rem; /* 48px */
+  background: transparent;
+  color: #fcfcfc;
+  font-family: "Satoshi", sans-serif;
+  font-weight: 700;
+  font-size: 1rem; /* 16px */
+  line-height: 130%;
+  border: 1px solid #fcfcfc;
+  border-radius: 2.219rem; /* 35.5px */
+  cursor: pointer;
+  z-index: 0;
+}
+
+.qty-panel .icon-add,
+.icon-remove {
+  margin-bottom: -2px;
+}
+
+/* === 6) Follow-up tekstas (multi products) =============================== */
+
+.products-followup {
+  pointer-events: auto;
+  max-width: min(45rem, 90%); /* 720px */
+  margin: 0.75rem 0 0rem; /* 12px 0 16px */
+  color: #fcfcfc;
+  line-height: 1.5;
+  font-size: 1rem; /* 16px */
+}
+/* Toast container */
+.toast-stack {
+  position: fixed;
+  top: 4.5rem; /* 👈 reguliuok viso stacko poziciją */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 90%;
+  padding: 0 1rem;
+  z-index: 9999;
+}
+
+/* Base toast */
+.notification-toast {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 500px;
+  height: 95px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #afbafb;
+  color: #0e218e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(15px);
+
+  animation: fadeInUp 0.2s ease forwards;
+  transition: transform 0.25s ease, opacity 0.25s ease; /* 👈 tik judėjimui */
+}
+
+/* stacking */
+.toast-stack .notification-toast:nth-child(1) {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  z-index: 3;
+}
+.toast-stack .notification-toast:nth-child(2) {
+  transform: translate(-50%, -10px);
+  opacity: 0.7;
+  z-index: 2;
+}
+.toast-stack .notification-toast:nth-child(3) {
+  transform: translate(-50%, -20px);
+  opacity: 0.4;
+  z-index: 1;
+}
+/* Checkmark */
+.notification-toast .checkmark {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Content */
+.notification-toast .success-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Product line */
+.notification-toast .product-line {
+  display: flex;
+  justify-content: space-between;
+  font-family: "Satoshi", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0e218e;
+}
+.notification-toast .product-line .product-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.notification-toast .product-line .product-qty {
+  font-weight: 400;
+  margin-left: 0.5rem;
+}
+
+/* Subtext */
+.notification-toast .added {
+  font-size: 14px;
+  font-weight: 400;
+  opacity: 0.85;
+  color: #0e218e;
+}
+
+/* View cart button */
+.notification-toast .view-cart {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: "Satoshi", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0e218e;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+/* Close btn */
+.notification-toast .close-btn {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.notification-toast .close-btn img {
+  width: 16px;
+  height: 16px;
+  filter: invert(13%) sepia(96%) saturate(4000%) hue-rotate(215deg) brightness(90%) contrast(95%);
+}
+
+.notification-toast.exit {
+  opacity: 0 !important;
+  transform: translate(-50%, -20px) scale(0.95) !important;
+  transition: all 0.3s ease;
+}
+.products-cta .cta-q-secondary {
+  margin-top: 1rem;
+}
+
+.chat-head-fade,
+.chat-foot-fade,
+.products-strip {
+  z-index: 1; /* žemai, tik fonui */
+}
+/* === 8) Overlay/Pointer events fix ======================================= */
+
+[data-overlay-anchor] {
+  pointer-events: none !important;
+}
+.msg.msg--ai:has([data-overlay-anchor]) {
+  /*pointer-events: none; */
+  background: transparent !important;
+}
+
+/* Kad mygtukai nepasimestų virš burbulo */
+.add-btn,
+.btn-primary,
+.btn-secondary,
+.view-cart {
+  position: relative;
+  z-index: 50;
+  cursor: pointer;
+}
+
+.product-card .reactions,
+.product-card .add-btn,
+.chip {
+  pointer-events: auto !important;
+}
+
+.qty-panel {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem; /* 8px */
+  padding: 0 0.5rem; /* horizontali erdvė */
+  height: 2rem; /* 32px */
+  min-width: 5.5rem; /* užtenka qty + du btn */
+  background: #fcfcfc;
+  border-radius: 36px;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+.qty-panel button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem; /* 24px */
+  height: 1.5rem; /* 24px */
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.qty-panel button img.icon-add {
+  margin-top: -2px;
+  margin-right: -8px;
+}
+
+.qty-panel button img.icon-remove {
+  margin-top: -2px;
+  margin-right: 4px;
+}
+
+.qty-panel span {
+  font-family: "Satoshi", sans-serif;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: #02092e;
+  text-align: center;
+  min-width: 1.5rem; /* 24px */
+}
+
+.products-header-more {
+  margin-top: 1rem;
+}
+
+/* Kortelės pritemdymas */
+.product-card.is-muted .product-img,
+.product-card.is-muted .circle--fav,
+.product-card.is-muted .add-btn,
+.product-card.is-muted .qty-panel,
+.product-card.is-muted .content {
+  opacity: 0.45;
+  transition: opacity 0.25s ease;
+}
+
+/* Disabled būsena mygtukams */
+.add-btn.is-disabled,
+.qty-panel.is-disabled {
+  pointer-events: none; /* 👈 nepaspaudžiami */
+}
+
+/* Produktų kortelės elementus apribojam */
+.product-card .reactions,
+.product-card .add-btn,
+.qty-panel {
+  z-index: 0; /* sumažinam, kad neperšoktų inputo */
+}
+
+/* === 9) Desktop overrides (≥ 610px) ====================================== */
+
+@media (min-width: 610px) {
+  /* 610px */
+  /* Burbulas jau absolute by default – nieko nekeičiam, tik vidines ribas */
+
+  .products-scroll.is-multiple {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    overflow: visible;
+    flex-wrap: nowrap;
+    transform: scale(0.76); /* temporary fix for size*/
+    transform-origin: center bottom;
+    margin-top: -5rem;
+  }
+
+  .products-scroll.is-single {
+    display: flex;
+    justify-content: flex-start;
+    overflow: visible;
+    max-width: 30rem; /* 480px input zonos/UX atitikimas */
+    margin: 0 auto;
+    padding-left: 0;
+  }
+
+  .product-card {
+    width: 12.5rem; /* 200px */
+    height: auto;
+  }
+  .product-card .image-wrap {
+    width: 12.5rem; /* 200px */
+    height: 13.25rem; /* 212px */
+  }
+
+  .products-header {
+    max-width: 30rem;
+    margin: 0 auto;
+    padding-left: 0;
+  }
+  .products-contain {
+    max-width: 30rem;
+    margin: 0 auto;
+  }
+  .products-followup {
+    margin-top: 0;
+    padding-left: 0;
+  }
+
+  .products-cta {
+    align-items: flex-start;
+    max-width: 30rem;
+    margin: 0 auto;
+    padding-left: 0;
+  }
+  .products-cta .cta-buttons {
+    justify-content: flex-start;
+    width: auto;
+    margin: 0.75rem 0 0; /* 12px 0 0 */
+    gap: 0;
+  }
+  .products-cta .btn-primary,
+  .products-cta .btn-secondary {
+    flex: none;
+    margin: 0;
+  }
+  .products-cta .btn-primary {
+    margin-left: 0.3rem;
+    min-width: 13.375rem; /* 214px */
+    border-top-right-radius: 0.625rem; /* 10px */
+    border-bottom-right-radius: 0.625rem; /* 10px */
+    border-radius: 2.219rem; /* 35.5px */
+  }
+  .products-cta .btn-secondary {
+    min-width: 7.5rem; /* 120px */
+    border-top-left-radius: 0.625rem; /* 10px */
+    border-bottom-left-radius: 0.625rem; /* 10px */
+    margin-left: -1px;
+    border-radius: 2.219rem; /* 35.5px */
+  }
+
+  .success-block {
+    max-width: 26.125rem; /* 418px */
+  }
+
+  .product-card,
+  .product-card * {
+    pointer-events: auto;
+  }
+
+  .product-card .reactions,
+  .product-card .add-btn {
+    z-index: 0;
+    pointer-events: auto;
+  }
+
+  .products-header-more {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    margin-bottom: -1rem;
+  }
+
+  .notification-toast {
+    top: 0rem;
+    width: 418px; /* 418px */
+    margin: -2rem auto 0;
+    height: 95px; /* figma desktop height */
+    padding: 12px;
+  }
+}
+
+/*
+.products-wrap.is-narrow .products-scroll.is-multiple .product-card {
+  transform: scale(0.75);
+  transform-origin: left bottom;
+}
+
+
+@media (min-width: 610px) {
+  .products-wrap.is-narrow .products-scroll.is-multiple {
+    transform: scale(0.75);
+    transform-origin: center bottom;
+  }
+  .products-wrap.is-narrow .products-scroll.is-multiple .product-card {
+    transform: none;
+  }
+}
+*/

@@ -1,0 +1,61 @@
+/* Fonts (palik tą patį CDN arba naudok savus) */
+@import url("https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700&display=swap");
+
+/* Design tokens */
+@import "./styles/tokens.css";
+
+/* Feature CSS (centrizuojam čia, o ne App.tsx) */
+@import "./styles/modal.css";
+@import "./styles/input-bubble.css";
+@import "./styles/background.css";
+@import "./styles/ai-button.css";
+@import "./styles/chips.css";
+
+/* ===== Base / resets ===== */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Globaliai nuimam focus outline */
+button:focus,
+button:focus-visible,
+input:focus,
+textarea:focus {
+  -webkit-tap-highlight-color: transparent;
+}
+/* Panaikinam automatinį focus ring visiems elementams modale */
+.modal-card *:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}

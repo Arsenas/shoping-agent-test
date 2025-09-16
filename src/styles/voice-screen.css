@@ -1,0 +1,204 @@
+/* ===== VOICE SCREEN ROOT ===== */
+.voice-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  padding: 1.5rem 0;
+  z-index: 3;
+}
+
+/* ===== HEADER ===== */
+.voice-header {
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 900px;
+  text-align: center;
+}
+
+.voice-title {
+  font-size: 1.75rem;
+  font-weight: 300;
+  line-height: 1.3;
+  color: #fcfcfc;
+  margin: 0;
+  padding: 0 1rem;
+}
+
+.voice-subtitle {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #e3e3e3;
+  opacity: 0.9;
+  margin: 0 0 2rem;
+}
+
+/* ===== MOBILE chips (scroll inline) ===== */
+.voice-chips {
+  width: 100%;
+  overflow: hidden;
+}
+
+.voice-chips .chips-inline {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  gap: 0.75rem;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 0 1rem;
+  margin: 0;
+
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.voice-chips .chip {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.voice-chips.is-dragging {
+  cursor: grabbing;
+  scroll-behavior: auto !important;
+}
+
+/* ===== MIC (centre) ===== */
+.mic-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.mic-btn img {
+  width: 12rem;
+  max-width: 200px;
+  height: auto;
+}
+
+/* Glow (kai klausosi) */
+.mic-btn.listening img {
+  animation: pulse 1.5s infinite ease-in-out;
+  filter: drop-shadow(0 0 12px rgba(54, 84, 255, 0.8));
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ===== FOOTER ===== */
+.voice-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 0 2rem 1.5rem;
+  z-index: 5;
+}
+.footer-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 0;
+}
+.footer-btn img {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* ===== DESKTOP ===== */
+@media (min-width: 610px) {
+  .voice-screen {
+    padding: 3rem 0;
+  }
+
+  .voice-title {
+    font-size: 2rem;
+    line-height: 1.2;
+    margin: 0 auto;
+    max-width: 480px;
+  }
+
+  .voice-subtitle {
+    font-size: 1.125rem;
+    margin: 0.75rem 0 1.5rem;
+  }
+
+  /* Chips wrap vietoj scroll */
+  .voice-chips {
+    display: grid;
+    gap: 16px;
+    justify-items: center;
+    align-items: center;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto 2rem;
+  }
+
+  .voice-chips .chips-inline {
+    display: flex;
+    flex-wrap: wrap;
+    overflow: visible;
+    white-space: normal;
+    gap: 1rem;
+    margin: 3px 0;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .voice-chips .chip {
+    min-width: 120px;
+    height: 47px;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 500;
+    background: rgba(252, 252, 252, 0.1);
+    color: #fcfcfc;
+  }
+
+  /* Mic sphere didesnis */
+  .mic-btn img {
+    width: 10rem;
+    max-width: 360px;
+    height: auto;
+    margin-bottom: 2rem;
+  }
+
+  /* Footer dešinėje */
+  .voice-footer {
+    justify-content: flex-end;
+    padding-right: 2rem;
+  }
+}

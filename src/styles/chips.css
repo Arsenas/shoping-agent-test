@@ -1,0 +1,129 @@
+/* ===== Base chip (mobile-first) ===== */
+.chip {
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1, 0.25rem);
+
+  min-height: 2.5rem; /* ~40px */
+  padding-inline: var(--space-3, 0.75rem);
+
+  border: none; /* default: jokio border */
+  border-radius: var(--radius-sm, 10px);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-on-dark, #fff);
+
+  font-family: var(
+    --font-sans,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif
+  );
+  font-weight: 500;
+  font-size: var(--fs-16, 1rem);
+  line-height: 1.3;
+
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* HOVER: 1px baltas „borderis“ (per box-shadow − be layout šuolių) */
+.chip:hover {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 0 1px #fff;
+}
+
+/* LAIKANT nuspaudus – jokio borderio */
+.chip:active {
+  background: rgba(255, 255, 255, 0.26);
+  box-shadow: none !important;
+}
+
+/* TOGGLINTAS (aria-pressed="true"): toks pat fonas kaip hover */
+.chip[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: none;
+}
+
+/* FOCUS RING: rodom tiek paprastam, tiek togglintam chip
+   (uždedam ir „1px baltą“, ir mėlyną iš tokens) */
+.chip:focus-visible:not(:active),
+.chip:focus:not(:active),
+.chip[aria-pressed="true"]:focus-visible:not(:active),
+.chip[aria-pressed="true"]:focus:not(:active) {
+  outline: none;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 0 2px #fff,
+    /* imituoja baltą borderį */ 0 0 0 6px var(--ring-focus, #3654ff);
+}
+
+/* Default: mobile chips = stack kaip desktop */
+.chips-inline {
+  display: flex;
+  flex-wrap: wrap; /* leidžia wrap’inti */
+  margin: 0 auto;
+  justify-content: center;
+  gap: 0.75rem;
+  overflow: visible; /* jokių scroll */
+  padding: 0 2rem;
+  white-space: normal;
+}
+.subquestion {
+  padding-top: 2rem;
+}
+
+/* Subquestion variantas: perrašo į kairę */
+.chips-inline.category-chips {
+  justify-content: flex-start; /* 👈 kairėje */
+  padding: 0;
+  padding-top: 1rem;
+}
+
+/* Kai mobile atidaryta keyboard → karuselė */
+html.kb-open .chips-inline {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  white-space: nowrap;
+  gap: var(--space-4, 1rem);
+  padding: var(--space-2, 0.5rem) var(--space-1, 0.25rem);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+html.kb-open .chips-inline::-webkit-scrollbar {
+  display: none;
+}
+/* Mobile/touch: kai chip togglintas, rodyk ring net ir be focus */
+@media (hover: none) and (pointer: coarse) {
+  .chip[aria-pressed="true"] {
+    /* baltas 1px + mėlynas token ring */
+    box-shadow: 0 0 0 1px #fff, 0 0 0 6px var(--ring-focus, #3654ff);
+  }
+}
+
+/* ===== Desktop patobulinimai ===== */
+@media (min-width: 610px) {
+  .chip {
+    /* min-height: 2.9375rem; 47px */
+    /* font-size: 1.125rem; ~18px */
+    padding-inline: var(--space-3, 0.75rem);
+  }
+  .chips-inline {
+    overflow: visible;
+    flex-wrap: wrap; /* <— svarbiausia! */
+    justify-content: center;
+    white-space: normal;
+    gap: 1rem; /* ~16px */
+    padding: 0;
+  }
+
+  /* Subquestion variantas: perrašo į kairę */
+  .chips-inline.category-chips {
+    justify-content: flex-start; /* 👈 kairėje */
+    padding-left: 0.1rem;
+    padding-top: 1rem;
+  }
+}
