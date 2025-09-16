@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import "../styles/voice-chat.css";
-import { useChatEngine } from "../hooks/useChatEngine";
 import { useChatScroll } from "../hooks/useChatScroll";
 import { useSpeechToText } from "../hooks/useSpeechToText";
 import type { AssistantTextMsg } from "../types";
+import type { useChatEngine } from "../hooks/useChatEngine";
 
 type VoiceChatScreenProps = {
+  chat: ReturnType<typeof useChatEngine>; // 👈 gaunam chat iš App.tsx
   onKeyboard: () => void;
   onBack?: () => void;
   autoStart?: boolean;
@@ -19,15 +20,19 @@ const VOICE_QUESTIONS = [
 ];
 
 export default function VoiceChatScreen({
+  chat,
   onKeyboard,
   autoStart,
   initialQuestion = "Hello, what are you looking for today?",
 }: VoiceChatScreenProps) {
-  const chat = useChatEngine();
   const logRef = useRef<HTMLDivElement>(null);
   useChatScroll(logRef, chat.messages);
 
-  const { mode, finalText, interimText, toggleListening } = useSpeechToText();
+  // user bubble iš voice → chat log
+  const { mode, finalText, interimText, toggleListening } = useSpeechToText((msg) => {
+    console.log("👤 Adding user message:", msg);
+    chat.addMessage(msg);
+  });
 
   const [stepIndex, setStepIndex] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(initialQuestion);
@@ -35,6 +40,28 @@ export default function VoiceChatScreen({
   const [showNoInput, setShowNoInput] = useState(false);
   const [hadListening, setHadListening] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  // --- Resume logika (tik mount metu) ---
+  useEffect(() => {
+    const lastAssistant = [...chat.messages].reverse().find((m) => m.role === "assistant" && m.kind === "text");
+    if (lastAssistant) {
+      console.log("↩️ Resume with last AI question:", lastAssistant.text);
+      setCurrentQuestion(lastAssistant.text);
+      setHasSubmitted(true); // 👈 PRIDĖTA – kad rodytų paskutinę AI žinutę UI
+
+      const idx = VOICE_QUESTIONS.findIndex((q) => q === lastAssistant.text);
+      if (idx >= 0) {
+        setStepIndex(idx + 1);
+        console.log("🔢 Resuming stepIndex at:", idx + 1);
+      }
+    } else {
+      console.log("🆕 Starting fresh with initial question");
+      setCurrentQuestion(initialQuestion);
+      setStepIndex(0);
+    }
+    // 👇 mount only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto start mic
   useEffect(() => {
@@ -46,39 +73,30 @@ export default function VoiceChatScreen({
     }
   }, [autoStart]);
 
-  // Handle finalText → pereinam prie kito klausimo
+  // Handle finalText → AI klausimai
   useEffect(() => {
     if (!finalText) return;
+
+    console.log("🎤 Final text captured:", finalText);
 
     setShowNoInput(false);
     if (finalText.trim().length === 0) return;
 
     setHasSubmitted(true);
 
-    // USER atsakymas → chat log
-    chat.sendMessage(finalText, { source: "voice" });
-
     if (stepIndex < VOICE_QUESTIONS.length) {
       setIsGenerating(true);
 
       const timeout = setTimeout(() => {
         const aiQ = VOICE_QUESTIONS[stepIndex];
-
-        // USER atsakymas → chat log
-        chat.addMessage({
-          id: crypto.randomUUID?.() ?? `user-${Date.now()}`,
-          role: "user",
-          kind: "text",
-          text: finalText,
-        });
-
-        // AI klausimas → chat log
-        chat.addMessage({
+        const aiMsg = {
           id: crypto.randomUUID?.() ?? `ai-${Date.now()}`,
-          role: "assistant",
-          kind: "text",
+          role: "assistant" as const,
+          kind: "text" as const,
           text: aiQ,
-        });
+        };
+        console.log("🤖 Adding AI question:", aiMsg);
+        chat.addMessage(aiMsg);
 
         setCurrentQuestion(aiQ);
         setStepIndex((s) => s + 1);
@@ -89,15 +107,15 @@ export default function VoiceChatScreen({
     } else {
       setIsGenerating(true);
 
-      // 👇 paskutinis user input jau buvo nusiųstas su source:voice
       const processingMsg: AssistantTextMsg = {
         id: `ai-${Date.now()}`,
         role: "assistant",
         kind: "text",
         text: "Processing your request…",
       };
-
+      console.log("🤖 Adding AI processing msg:", processingMsg);
       chat.addMessage(processingMsg);
+
       setCurrentQuestion(processingMsg.text);
       setStepIndex(0);
 
@@ -107,6 +125,7 @@ export default function VoiceChatScreen({
 
       return () => clearTimeout(timeout);
     }
+    // 👇 tik finalText – NEbepriklauso nuo chat ar stepIndex
   }, [finalText]);
 
   // Track mic state
@@ -123,7 +142,6 @@ export default function VoiceChatScreen({
 
   return (
     <div className={`voice-chat-screen ${mode === "listening" ? "listening" : ""}`}>
-      {/* HEADER: tik kai klausom */}
       {!showNoInput && mode === "listening" && !isGenerating && (
         <div className="vc-header">
           <div className="vc-header-line" />
@@ -131,11 +149,9 @@ export default function VoiceChatScreen({
         </div>
       )}
 
-      {/* BODY */}
       <div className="vc-body" ref={logRef}>
         {!showNoInput ? (
           <>
-            {/* Instrukcija + klausimas kaip AI atsakymas */}
             {hasSubmitted && !isGenerating && mode !== "listening" && (
               <>
                 <p className="vc-instruction">Answer the question or input any information you wish</p>
@@ -143,10 +159,8 @@ export default function VoiceChatScreen({
               </>
             )}
 
-            {/* Interim klausymo metu */}
             {mode === "listening" && interimText && <div className="vc-answer vc-answer--user">{interimText}</div>}
 
-            {/* Generating */}
             {isGenerating && (
               <div className="vc-generating">
                 <img src="/img/generating-answer.svg" alt="Generating" />
@@ -162,7 +176,6 @@ export default function VoiceChatScreen({
         )}
       </div>
 
-      {/* MIC */}
       {!isGenerating && (
         <div className="vc-mic-wrap">
           <button className={`vc-mic ${mode === "listening" ? "is-listening" : ""}`} onClick={toggleListening}>
@@ -173,7 +186,6 @@ export default function VoiceChatScreen({
         </div>
       )}
 
-      {/* FOOTER */}
       <div className="vc-footer">
         <button className="footer-btn left">
           <img src="/img/speaker.svg" alt="Speaker" />

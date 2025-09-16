@@ -28,15 +28,16 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
     if (!q) return;
 
     const userMsg: Msg = { id: uid(), role: "user", kind: "text", text: q };
+    const loaderId = uid(); // 👈 deklaruojam prieš if
 
+    // 👉 voice atveju dabar veikia taip pat kaip chat
     if (opts?.source === "voice") {
-      // 👉 voice atveju tik appendinam userMsg
-      setMessages((prev) => [...prev, userMsg]);
+      setMessages((prev) => [...prev, userMsg, { id: loaderId, role: "system", kind: "loading" } as Msg]);
+      pendingQueries.set(loaderId, q);
       return;
     }
 
     // 👉 chat atveju appendinam su loader
-    const loaderId = uid();
     setMessages((prev) => [...prev, userMsg, { id: loaderId, role: "system", kind: "loading" } as Msg]);
 
     pendingQueries.set(loaderId, q);
@@ -170,13 +171,25 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
         setMessages((prev) =>
           prev
             .filter((m) => m.id !== loader!.id)
-            .concat([{ id: loader!.id + "-feedback", role: "assistant", kind: "feedback" } as Msg])
+            .concat([
+              {
+                id: loader!.id + "-feedback",
+                role: "assistant",
+                kind: "feedback",
+              } as Msg,
+            ])
         );
       } else if (scenario === "connection") {
         setMessages((prev) =>
           prev
             .filter((m) => m.id !== loader!.id)
-            .concat([{ id: loader!.id + "-connection", role: "assistant", kind: "connection-lost" } as Msg])
+            .concat([
+              {
+                id: loader!.id + "-connection",
+                role: "assistant",
+                kind: "connection-lost",
+              } as Msg,
+            ])
         );
       } else if (scenario === "error") {
         setMessages((prev) =>
