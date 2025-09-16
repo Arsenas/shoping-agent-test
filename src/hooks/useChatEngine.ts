@@ -19,9 +19,10 @@ export function useChatEngine() {
     engineRef.current.handleMessagesEffect(messages);
   }, [messages]);
 
-  const sendMessage = (text: string) => {
+  /** Pagrindinė siuntimo funkcija */
+  const sendMessage = (text: string, opts?: { source?: "chat" | "voice" }) => {
     if (text.trim()) {
-      engineRef.current.send(text);
+      engineRef.current.send(text, opts);
     }
   };
 
@@ -37,6 +38,7 @@ export function useChatEngine() {
     setMessages((prev) => prev.map((m) => (m.id === id ? newMsg : m)));
   };
 
+  /** Category pasirinkimas – nepranulina istorijos */
   const pickCategory = (cat: Category) => {
     const userMsg: Msg = {
       id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
@@ -44,7 +46,9 @@ export function useChatEngine() {
       kind: "text",
       text: sentenceFor(cat),
     };
-    setMessages([userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
+    // iškart siunčiam į mock engine kaip chat query
+    engineRef.current.send(userMsg.text, { source: "chat" });
   };
 
   const retry = (lastUser: string) => {
@@ -60,7 +64,7 @@ export function useChatEngine() {
     });
 
     if (lastUser.trim()) {
-      engineRef.current.send(lastUser);
+      engineRef.current.send(lastUser, { source: "chat" });
     }
   };
 

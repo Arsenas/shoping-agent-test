@@ -3,6 +3,7 @@ import "../styles/voice-chat.css";
 import { useChatEngine } from "../hooks/useChatEngine";
 import { useChatScroll } from "../hooks/useChatScroll";
 import { useSpeechToText } from "../hooks/useSpeechToText";
+import type { AssistantTextMsg } from "../types";
 
 type VoiceChatScreenProps = {
   onKeyboard: () => void;
@@ -54,17 +55,31 @@ export default function VoiceChatScreen({
 
     setHasSubmitted(true);
 
-    if (stepIndex < VOICE_QUESTIONS.length) {
-      chat.addMessage({
-        id: `user-${Date.now()}`,
-        role: "user",
-        kind: "text",
-        text: finalText,
-      });
+    // USER atsakymas → chat log
+    chat.sendMessage(finalText, { source: "voice" });
 
+    if (stepIndex < VOICE_QUESTIONS.length) {
       setIsGenerating(true);
+
       const timeout = setTimeout(() => {
         const aiQ = VOICE_QUESTIONS[stepIndex];
+
+        // USER atsakymas → chat log
+        chat.addMessage({
+          id: crypto.randomUUID?.() ?? `user-${Date.now()}`,
+          role: "user",
+          kind: "text",
+          text: finalText,
+        });
+
+        // AI klausimas → chat log
+        chat.addMessage({
+          id: crypto.randomUUID?.() ?? `ai-${Date.now()}`,
+          role: "assistant",
+          kind: "text",
+          text: aiQ,
+        });
+
         setCurrentQuestion(aiQ);
         setStepIndex((s) => s + 1);
         setIsGenerating(false);
@@ -73,8 +88,17 @@ export default function VoiceChatScreen({
       return () => clearTimeout(timeout);
     } else {
       setIsGenerating(true);
-      chat.sendMessage(finalText);
-      setCurrentQuestion("Processing your request…");
+
+      // 👇 paskutinis user input jau buvo nusiųstas su source:voice
+      const processingMsg: AssistantTextMsg = {
+        id: `ai-${Date.now()}`,
+        role: "assistant",
+        kind: "text",
+        text: "Processing your request…",
+      };
+
+      chat.addMessage(processingMsg);
+      setCurrentQuestion(processingMsg.text);
       setStepIndex(0);
 
       const timeout = setTimeout(() => {
