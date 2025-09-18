@@ -95,6 +95,16 @@ export default function VoiceChatScreen({
       return;
     }
 
+    // 👇 įdedam loading pranešimą prieš AI atsakymą
+    const loaderMsg: Msg = {
+      id: `loader-${Date.now()}`,
+      role: "system",
+      kind: "loading",
+      target: "text",
+    };
+    chat.addMessage(loaderMsg);
+    console.log("⏳ Added loader message", loaderMsg);
+
     if (stepIndex < VOICE_QUESTIONS.length) {
       setIsGenerating(true);
       const timeout = setTimeout(() => {
@@ -119,10 +129,12 @@ export default function VoiceChatScreen({
         kind: "text",
         text: "Processing your request…",
       };
-      chat.addMessage(processingMsg);
-      setCurrentQuestion(processingMsg.text);
-      setStepIndex(0);
-      const timeout = setTimeout(() => setIsGenerating(false), 3000);
+      const timeout = setTimeout(() => {
+        chat.addMessage(processingMsg);
+        setCurrentQuestion(processingMsg.text);
+        setStepIndex(0);
+        setIsGenerating(false);
+      }, 3000);
       return () => clearTimeout(timeout);
     }
   }, [finalText]);
@@ -156,6 +168,17 @@ export default function VoiceChatScreen({
   const lastMsg = [...chat.messages].reverse()[0];
   const isLoadingProducts = lastMsg?.kind === "loading" && (lastMsg as any).target === "products";
   const isLoadingText = lastMsg?.kind === "loading" && (lastMsg as any).target === "text";
+
+  console.log("🎯 Debug lastMsg:", lastMsg);
+  console.log(
+    "⚡ isGenerating:",
+    isGenerating,
+    "isLoadingText:",
+    isLoadingText,
+    "isLoadingProducts:",
+    isLoadingProducts
+  );
+
   const showMic = !isGenerating && !isLoadingProducts && lastMsg?.kind !== "products";
 
   return (
@@ -174,10 +197,13 @@ export default function VoiceChatScreen({
               if (!lastMsg) return null;
 
               if (isLoadingProducts) {
+                console.log("📦 Rodo product loading");
                 return <LoadingProducts />;
               }
 
-              if (isLoadingText) {
+              // 👇 Loader rodom grynai pagal state, nepriklausomai nuo lastMsg
+              if (isGenerating) {
+                console.log("✍️ Rodo text generating (pagal isGenerating=true)");
                 return (
                   <div className="vc-generating">
                     <img src="/img/generating-answer.svg" alt="Generating" />
