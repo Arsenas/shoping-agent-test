@@ -65,7 +65,11 @@ export function ProductsStripVoice({ products, header, onAddToCart, onShowToast 
           const qty = quantities[key] ?? 0;
 
           return (
-            <article key={key} className={`product-card${isMuted ? " is-muted" : ""}`} aria-label={p.title}>
+            <article
+              key={key}
+              className={`product-card${isMuted ? " is-muted" : ""}${single ? " is-single-card" : ""}`}
+              aria-label={p.title}
+            >
               <div className="image-wrap">
                 <img className="product-img" src={p.img} alt={p.title} />
 

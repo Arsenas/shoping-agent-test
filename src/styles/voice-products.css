@@ -51,10 +51,28 @@
 .voice-products-grid.is-single {
   justify-content: center;
 }
-.voice-products-grid.is-single .voice-product-card {
+
+.voice-products-grid.is-single .product-card {
   flex: 1 1 100%;
   max-width: 20.875rem; /* 334px */
-  height: auto;
+  height: 25rem; /* pvz. 400px */
+}
+
+.voice-products-grid.is-single .product-card .image-wrap {
+  height: 18.25rem; /* 292px */
+}
+
+.voice-products-grid.is-single .product-card .content {
+  height: 6.75rem; /* 108px */
+}
+
+/* IMAGE */
+.voice-products-grid.is-single .image-wrap {
+  width: 100%;
+  height: 11.125rem; /* 178px */
+  object-fit: cover;
+  border-radius: 0.625rem; /* 10px */
+  display: block;
 }
 
 /* VOICE PRODUCT CARD (multi kortelės – mobile) */
