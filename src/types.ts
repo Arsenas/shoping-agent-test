@@ -45,6 +45,7 @@ export type LoadingMsg = {
   role: "system";
   kind: "loading";
   text?: string;
+  target?: "text" | "products"; // 👈 pridėta
 };
 
 export type ProductsMsg = {

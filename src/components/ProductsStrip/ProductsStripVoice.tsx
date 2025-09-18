@@ -12,17 +12,17 @@ type Props = {
   showMore?: boolean;
   onAddToCart?: (title: string, qty: number) => void;
   onShowToast?: (payload: { items: { title: string; qty: number }[] }) => void;
+  onFollowUp?: () => void;
   className?: string;
 };
 
-export function ProductsStripVoice({ products, header, onAddToCart, onShowToast }: Props) {
+export function ProductsStripVoice({ products, header, onAddToCart, onShowToast, onFollowUp }: Props) {
   const { muted, favorites, quantities, changeQty, toggleDislike, toggleFavorite } = useProductsState(products, {
     onAddToCart,
     onShowToast,
   });
 
   const [ctaDismissed, setCtaDismissed] = useState(false);
-  const [showFollowup, setShowFollowup] = useState(false);
 
   const single = products.length === 1;
 
@@ -31,20 +31,18 @@ export function ProductsStripVoice({ products, header, onAddToCart, onShowToast 
     if (chatLog) {
       chatLog.scrollTo({ top: chatLog.scrollHeight, behavior: "smooth" });
     }
-  }, [products, header, ctaDismissed, showFollowup]);
+  }, [products, header, ctaDismissed]);
 
   const handleAddAllToCart = () => {
     const product = products[0];
     if (!product) return;
     onAddToCart?.(product.title, 1);
     onShowToast?.({ items: [{ title: product.title, qty: 1 }] });
-    setCtaDismissed(true);
-    setShowFollowup(true);
+    setCtaDismissed(true); // po paspaudimo rodysim Follow up
   };
 
   const handleNotNow = () => {
     setCtaDismissed(true);
-    setShowFollowup(true);
   };
 
   return (
@@ -137,24 +135,27 @@ export function ProductsStripVoice({ products, header, onAddToCart, onShowToast 
         })}
       </div>
 
-      {/* CTA / Follow-up */}
+      {/* CTA footer */}
       <div className="voice-products-footer">
-        {single && !ctaDismissed && (
-          <div className="products-cta">
-            <p className="cta-q">Add this to your cart?</p>
+        {single ? (
+          !ctaDismissed ? (
             <div className="cta-buttons">
               <button className="btn-primary" onClick={handleAddAllToCart}>
                 Add to cart
               </button>
               <button className="btn-secondary" onClick={handleNotNow}>
-                Follow Up
+                Not now
               </button>
             </div>
-          </div>
-        )}
-
-        {(showFollowup || (single && ctaDismissed)) && (
-          <p className="products-followup">Do you need any further assistance?</p>
+          ) : (
+            <button className="btn-primary followup-btn" onClick={onFollowUp}>
+              Follow up
+            </button>
+          )
+        ) : (
+          <button className="btn-primary followup-btn" onClick={onFollowUp}>
+            Follow up
+          </button>
         )}
       </div>
     </div>

@@ -8,7 +8,7 @@ type Deps = {
   setMessages: React.Dispatch<React.SetStateAction<Msg[]>>;
   setCollected: React.Dispatch<React.SetStateAction<Collected>>;
   getProducts?: () => typeof MOCK_PRODUCTS;
-  delayMs?: number; // default 900ms
+  delayMs?: number; // default 900ms for text
 };
 
 const processedLoaderIds = new Set<string>();
@@ -30,9 +30,35 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
     const userMsg: Msg = { id: uid(), role: "user", kind: "text", text: q };
     const loaderId = uid();
 
-    setMessages((prev) => [...prev, userMsg, { id: loaderId, role: "system", kind: "loading" } as Msg]);
+    // 🔑 Nustatome target: "products" arba "text"
+    const isProductQuery = [
+      "one",
+      "two",
+      "three",
+      "four",
+      "five",
+      "six",
+      "seven",
+      "eight",
+      "many",
+      "alternative",
+      "more",
+    ].some((k) => q.toLowerCase().includes(k));
+
+    setMessages((prev) => [
+      ...prev,
+      userMsg,
+      {
+        id: loaderId,
+        role: "system",
+        kind: "loading",
+        target: isProductQuery ? "products" : "text",
+      } as Msg,
+    ]);
+
     pendingQueries.set(loaderId, q);
   }
+
   function handleMessagesEffect(messages: Msg[]) {
     let loader: Msg | undefined;
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -47,6 +73,10 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
 
     processedLoaderIds.add(loader.id);
     const q = (pendingQueries.get(loader.id) ?? "").toLowerCase();
+
+    // ⏳ pasirinkti delay: produktams 3s, tekstui numatytas
+    const isProductsTarget = (loader as any).target === "products";
+    const waitMs = isProductsTarget ? 3000 : delayMs;
 
     const t = setTimeout(() => {
       pendingQueries.delete(loader!.id);
@@ -69,7 +99,7 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
       else if (q.includes("error")) scenario = "error";
       else scenario = "default";
 
-      // === NEW SCENARIOS (1–8) ===
+      // === Produktų scenarijai ===
       if (["one", "two", "three", "four", "five", "six", "seven", "eight"].includes(scenario)) {
         const countMap: Record<string, number> = {
           one: 1,
@@ -150,7 +180,9 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
               } as Msg,
             ])
         );
-      } else if (scenario === "none") {
+      }
+      // === Tekstiniai scenarijai ===
+      else if (scenario === "none") {
         setMessages((prev) =>
           prev
             .filter((m) => m.id !== loader!.id)
@@ -236,7 +268,7 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
             ])
         );
       }
-    }, delayMs);
+    }, waitMs);
 
     return () => clearTimeout(t);
   }
