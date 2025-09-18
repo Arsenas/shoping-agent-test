@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import "../styles/voice-chat.css";
 import { useChatScroll } from "../hooks/useChatScroll";
 import { useSpeechToText } from "../hooks/useSpeechToText";
-import type { AssistantTextMsg } from "../types";
+import type { AssistantTextMsg, Msg } from "../types";
 import type { useChatEngine } from "../hooks/useChatEngine";
+import { ProductsStripVoice } from "../components/ProductsStrip/ProductsStripVoice"; // 👈 pridėta
 
 type VoiceChatScreenProps = {
   chat: ReturnType<typeof useChatEngine>; // 👈 gaunam chat iš App.tsx
@@ -39,7 +40,7 @@ export default function VoiceChatScreen({
   const [isGenerating, setIsGenerating] = useState(false);
   const [showNoInput, setShowNoInput] = useState(false);
   const [hadListening, setHadListening] = useState(false);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [, setHasSubmitted] = useState(false);
 
   // --- Resume logika (tik mount metu) ---
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function VoiceChatScreen({
     if (lastAssistant) {
       console.log("↩️ Resume with last AI question:", lastAssistant.text);
       setCurrentQuestion(lastAssistant.text);
-      setHasSubmitted(true); // 👈 PRIDĖTA – kad rodytų paskutinę AI žinutę UI
+      setHasSubmitted(true);
 
       const idx = VOICE_QUESTIONS.findIndex((q) => q === lastAssistant.text);
       if (idx >= 0) {
@@ -59,7 +60,6 @@ export default function VoiceChatScreen({
       setCurrentQuestion(initialQuestion);
       setStepIndex(0);
     }
-    // 👇 mount only
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -76,7 +76,6 @@ export default function VoiceChatScreen({
   // Handle finalText → AI klausimai
   useEffect(() => {
     if (!finalText) return;
-
     console.log("🎤 Final text captured:", finalText);
 
     setShowNoInput(false);
@@ -89,10 +88,10 @@ export default function VoiceChatScreen({
 
       const timeout = setTimeout(() => {
         const aiQ = VOICE_QUESTIONS[stepIndex];
-        const aiMsg = {
+        const aiMsg: Msg = {
           id: crypto.randomUUID?.() ?? `ai-${Date.now()}`,
-          role: "assistant" as const,
-          kind: "text" as const,
+          role: "assistant",
+          kind: "text",
           text: aiQ,
         };
         console.log("🤖 Adding AI question:", aiMsg);
@@ -125,7 +124,6 @@ export default function VoiceChatScreen({
 
       return () => clearTimeout(timeout);
     }
-    // 👇 tik finalText – NEbepriklauso nuo chat ar stepIndex
   }, [finalText]);
 
   // Track mic state
@@ -152,19 +150,59 @@ export default function VoiceChatScreen({
       <div className="vc-body" ref={logRef}>
         {!showNoInput ? (
           <>
-            {hasSubmitted && !isGenerating && mode !== "listening" && (
-              <>
-                <p className="vc-instruction">Answer the question or input any information you wish</p>
-                <div className="vc-answer vc-answer--ai">{currentQuestion}</div>
-              </>
-            )}
+            {(() => {
+              const lastMsg = [...chat.messages].reverse().find((m) => m.role === "assistant" || m.role === "user");
 
+              if (!lastMsg) return null;
+
+              // 🟦 Produktai – horizontal strip
+              if (lastMsg.kind === "products") {
+                return (
+                  <ProductsStripVoice
+                    key={lastMsg.id}
+                    products={lastMsg.products}
+                    header={lastMsg.header}
+                    footer={lastMsg.footer}
+                    visibleCount={lastMsg.visibleCount}
+                    showMore={lastMsg.showMore}
+                    onAddToCart={chat.handleChangeCart}
+                    className="products-voice"
+                  />
+                );
+              }
+
+              // 🟦 AI klausimas
+              if (lastMsg.role === "assistant" && lastMsg.kind === "text") {
+                // ❌ Jei voice on (listening/generating), nerodom body
+                if (mode === "listening" || isGenerating) return null;
+
+                // ✅ Rodyti tik kai voice off
+                return (
+                  <>
+                    <p className="vc-instruction">Answer the question or input any information you wish</p>
+                    <div className="vc-answer vc-answer--ai">{lastMsg.text}</div>
+                  </>
+                );
+              }
+
+              // 🟦 User atsakymas
+              if (lastMsg.role === "user" && lastMsg.kind === "text") {
+                // ❌ Jei generuojam – nerodom
+                if (isGenerating || mode === "listening") return null;
+
+                return <div className="vc-answer vc-answer--user">{lastMsg.text}</div>;
+              }
+              return null;
+            })()}
+
+            {/* Interim klausymo metu */}
             {mode === "listening" && interimText && <div className="vc-answer vc-answer--user">{interimText}</div>}
 
+            {/* Generating state */}
             {isGenerating && (
               <div className="vc-generating">
                 <img src="/img/generating-answer.svg" alt="Generating" />
-                <p>Generating answer…</p>
+                <p>GENERATING ANSWER…</p>
               </div>
             )}
           </>
@@ -176,7 +214,8 @@ export default function VoiceChatScreen({
         )}
       </div>
 
-      {!isGenerating && (
+      {/* 🟦 Mic rodom tik jei NE produktai ir NE generating */}
+      {!isGenerating && !chat.messages.some((m) => m.kind === "products") && (
         <div className="vc-mic-wrap">
           <button className={`vc-mic ${mode === "listening" ? "is-listening" : ""}`} onClick={toggleListening}>
             <img src="/img/voice-sphere.svg" alt="Mic" />
@@ -185,7 +224,6 @@ export default function VoiceChatScreen({
           {mode === "listening" && <span className="vc-status">LISTENING...</span>}
         </div>
       )}
-
       <div className="vc-footer">
         <button className="footer-btn left">
           <img src="/img/speaker.svg" alt="Speaker" />

@@ -23,26 +23,16 @@ export function sentenceFor(c: Category) {
 export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: Deps) {
   const products = () => (getProducts ? getProducts() : MOCK_PRODUCTS);
 
-  function send(text: string, opts?: { source?: "chat" | "voice" }) {
+  function send(text: string) {
     const q = text.trim();
     if (!q) return;
 
     const userMsg: Msg = { id: uid(), role: "user", kind: "text", text: q };
-    const loaderId = uid(); // 👈 deklaruojam prieš if
+    const loaderId = uid();
 
-    // 👉 voice atveju dabar veikia taip pat kaip chat
-    if (opts?.source === "voice") {
-      setMessages((prev) => [...prev, userMsg, { id: loaderId, role: "system", kind: "loading" } as Msg]);
-      pendingQueries.set(loaderId, q);
-      return;
-    }
-
-    // 👉 chat atveju appendinam su loader
     setMessages((prev) => [...prev, userMsg, { id: loaderId, role: "system", kind: "loading" } as Msg]);
-
     pendingQueries.set(loaderId, q);
   }
-
   function handleMessagesEffect(messages: Msg[]) {
     let loader: Msg | undefined;
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -66,23 +56,47 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
       else if (q.includes("alternative")) scenario = "alternative";
       else if (q.includes("many")) scenario = "many";
       else if (q.includes("one")) scenario = "one";
+      else if (q.includes("two")) scenario = "two";
+      else if (q.includes("three")) scenario = "three";
+      else if (q.includes("four")) scenario = "four";
+      else if (q.includes("five")) scenario = "five";
+      else if (q.includes("six")) scenario = "six";
+      else if (q.includes("seven")) scenario = "seven";
+      else if (q.includes("eight")) scenario = "eight";
       else if (q.includes("more")) scenario = "more";
       else if (q.includes("feedback")) scenario = "feedback";
       else if (q.includes("connection")) scenario = "connection";
       else if (q.includes("error")) scenario = "error";
       else scenario = "default";
 
-      if (scenario === "one") {
+      // === NEW SCENARIOS (1–8) ===
+      if (["one", "two", "three", "four", "five", "six", "seven", "eight"].includes(scenario)) {
+        const countMap: Record<string, number> = {
+          one: 1,
+          two: 2,
+          three: 3,
+          four: 4,
+          five: 5,
+          six: 6,
+          seven: 7,
+          eight: 8,
+        };
+        const count = countMap[scenario] ?? 1;
         setMessages((prev) =>
           prev
             .filter((m) => m.id !== loader!.id)
             .concat([
               {
-                id: loader!.id + "-one",
+                id: loader!.id + "-" + scenario,
                 role: "assistant",
                 kind: "products",
-                products: [products()[0]],
-                header: "Based on your request, this is the single best match we recommend:",
+                products: products().slice(0, count),
+                header:
+                  count === 1
+                    ? "Based on your search, this is the best product match for your needs."
+                    : `We found ${count} product(s) matching your request:`,
+                visibleCount: Math.min(count, 3),
+                showMore: count > 3,
               } as Msg,
             ])
         );
@@ -113,7 +127,7 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
                 role: "assistant",
                 kind: "products",
                 products: products().slice(3, 6),
-                header: `I couldn’t find anything for "${q}", but here are the closest matches that our customers love:`,
+                header: `I couldn’t find anything for "${q}", but here are the closest matches our customers love:`,
                 footer: "Do you need any further help?",
                 visibleCount: 3,
                 showMore: false,
@@ -171,25 +185,13 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
         setMessages((prev) =>
           prev
             .filter((m) => m.id !== loader!.id)
-            .concat([
-              {
-                id: loader!.id + "-feedback",
-                role: "assistant",
-                kind: "feedback",
-              } as Msg,
-            ])
+            .concat([{ id: loader!.id + "-feedback", role: "assistant", kind: "feedback" } as Msg])
         );
       } else if (scenario === "connection") {
         setMessages((prev) =>
           prev
             .filter((m) => m.id !== loader!.id)
-            .concat([
-              {
-                id: loader!.id + "-connection",
-                role: "assistant",
-                kind: "connection-lost",
-              } as Msg,
-            ])
+            .concat([{ id: loader!.id + "-connection", role: "assistant", kind: "connection-lost" } as Msg])
         );
       } else if (scenario === "error") {
         setMessages((prev) =>
@@ -214,14 +216,21 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
                 role: "assistant",
                 kind: "text",
                 text:
-                  "This is a default text message, to test different outcomes use the following keywords listed below:\n" +
-                  "- type 'one' → one product\n" +
-                  "- type 'many' → many products\n" +
-                  "- type 'more' → products with Show more button\n" +
-                  "- type 'none' → no results + recommendations\n" +
-                  "- type 'alternative' → alternative UI (3 different products)\n" +
+                  "This is a default text message. Try:\n" +
+                  "- type 'one' → 1 product\n" +
+                  "- type 'two' → 2 products\n" +
+                  "- type 'three' → 3 products\n" +
+                  "- type 'four' → 4 products\n" +
+                  "- type 'five' → 5 products\n" +
+                  "- type 'six' → 6 products\n" +
+                  "- type 'seven' → 7 products\n" +
+                  "- type 'eight' → 8 products\n" +
+                  "- type 'many' → all products\n" +
+                  "- type 'alternative' → 3 alternative products\n" +
+                  "- type 'more' → many with show more\n" +
+                  "- type 'none' → no results\n" +
                   "- type 'feedback' → feedback screen\n" +
-                  "- type 'connection' → connection lost screen\n" +
+                  "- type 'connection' → connection lost\n" +
                   "- type 'error' → error message",
               } as Msg,
             ])

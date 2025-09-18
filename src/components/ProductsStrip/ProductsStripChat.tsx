@@ -1,7 +1,9 @@
+// src/components/ProductsStrip/ProductsStripChat.tsx
 import { useRef, useEffect, useState } from "react";
-import "../styles/products-strip.css";
-import type { Product } from "../screens/ChatScreen";
-import { useDragScroll } from "../hooks/useDragScroll";
+import "../../styles/products-strip.css";
+import type { Product } from "../../screens/ChatScreen";
+import { useDragScroll } from "../../hooks/useDragScroll";
+import { useProductsState } from "./useProductsState";
 
 type Props = {
   products: Product[];
@@ -13,7 +15,7 @@ type Props = {
   onShowToast?: (payload: { items: { title: string; qty: number }[] }) => void;
 };
 
-export function ProductsStripMessage({
+export function ProductsStripChat({
   products,
   header,
   footer,
@@ -22,9 +24,11 @@ export function ProductsStripMessage({
   onAddToCart,
   onShowToast,
 }: Props) {
-  const [muted, setMuted] = useState<Record<string, boolean>>({});
-  const [favorites, setFavorites] = useState<Record<string, boolean>>({});
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const { muted, favorites, quantities, changeQty, toggleDislike, toggleFavorite } = useProductsState(products, {
+    onAddToCart,
+    onShowToast,
+  });
+
   const [groups, setGroups] = useState<Product[][]>([products.slice(0, visibleCount)]);
   const [ctaDismissed, setCtaDismissed] = useState(false);
   const [showFollowup, setShowFollowup] = useState(false);
@@ -44,68 +48,20 @@ export function ProductsStripMessage({
     }
   }, [products, header, footer, groups, ctaDismissed, showFollowup]);
 
-  const changeQty = (id: string, delta: number, product?: Product) => {
-    setQuantities((prev) => {
-      const current = prev[id] ?? 0;
-      const next = Math.max(0, current + delta);
-
-      if (product) {
-        if (current === 0 && delta > 0) {
-          onAddToCart?.(product.title, 1);
-          onShowToast?.({ items: [{ title: product.title, qty: 1 }] });
-        } else if (next > 0) {
-          onShowToast?.({ items: [{ title: product.title, qty: next }] });
-        } else if (next === 0) {
-          onShowToast?.({ items: [{ title: product.title, qty: 0 }] });
-        }
-      }
-
-      // 👇 follow-up tik multi scenarijuose
-      if (!single && (many || more || alternative)) {
-        setShowFollowup(true);
-      }
-
-      return { ...prev, [id]: next };
-    });
-  };
-
-  const handleToggleDislike = (id: string) => {
-    setMuted((prev) => {
-      const newMuted = !prev[id];
-      if (newMuted) {
-        setQuantities((q) => ({ ...q, [id]: 0 }));
-        setFavorites((f) => ({ ...f, [id]: false }));
-      }
-      return { ...prev, [id]: newMuted };
-    });
-  };
-
-  const handleToggleFavorite = (id: string) => {
-    setFavorites((prev) => {
-      const newFav = !prev[id];
-      if (newFav) {
-        setMuted((m) => ({ ...m, [id]: false }));
-      }
-      return { ...prev, [id]: newFav };
-    });
-  };
-
   const handleAddAllToCart = () => {
     if (!single) return;
     const product = products[0];
     if (product) {
-      onAddToCart?.(product.title, 1); // visada tik 1
+      onAddToCart?.(product.title, 1);
       onShowToast?.({ items: [{ title: product.title, qty: 1 }] });
-      setQuantities({ [product.id]: 1 }); // qty panel → rodo 1
-      setCtaDismissed(true); // CTA dingsta
-      setShowFollowup(true); // follow-up vietoje CTA
+      setCtaDismissed(true);
+      setShowFollowup(true);
     }
   };
 
   const handleNotNow = () => {
-    setQuantities({});
     setCtaDismissed(true);
-    setShowFollowup(true); // po „Not now“ taip pat rodome follow-up
+    setShowFollowup(true);
   };
 
   const handleShowMore = () => {
@@ -148,7 +104,7 @@ export function ProductsStripMessage({
                       className="circle circle--dislike"
                       aria-label="Dislike"
                       aria-pressed={isMuted}
-                      onClick={() => handleToggleDislike(key)}
+                      onClick={() => toggleDislike(key)}
                     >
                       <img src="/img/dislike.svg" alt="" />
                     </button>
@@ -157,7 +113,7 @@ export function ProductsStripMessage({
                       className={`circle circle--fav ${isFav ? "is-fav" : ""}`}
                       aria-label="Save"
                       aria-pressed={isFav}
-                      onClick={() => handleToggleFavorite(key)}
+                      onClick={() => toggleFavorite(key)}
                     >
                       <img src="/img/favorite.svg" alt="" />
                     </button>
@@ -220,7 +176,6 @@ export function ProductsStripMessage({
           </button>
         )}
 
-        {/* CTA tik single, ir tik kol dar nebuvo paspausta */}
         {single && !ctaDismissed && (
           <div className="products-cta">
             <p className="cta-q">Add this to your cart?</p>
@@ -235,7 +190,6 @@ export function ProductsStripMessage({
           </div>
         )}
 
-        {/* follow-up visais kitais atvejais */}
         {(showFollowup || (single && ctaDismissed)) && (
           <p className="products-followup">Do you need any further assistance?</p>
         )}
