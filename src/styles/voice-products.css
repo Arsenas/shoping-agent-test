@@ -26,16 +26,32 @@
 
 .voice-products-header {
   font-family: "Satoshi", sans-serif;
-  font-weight: 700;
-  font-size: 1.6rem;
-  line-height: 1.2;
   text-align: center;
+}
+
+/* Vienas produktas -> gradientinis tekstas */
+.voice-products-header.is-single {
+  font-weight: 700;
+  font-size: 32px; /* 2rem */
+  line-height: 120%; /* ~38px */
   letter-spacing: -0.02em;
+
   background: linear-gradient(90deg, #bec8ff -0.36%, #ffffff 102.04%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
 }
 
+/* Daug produktų -> paprastas baltas tekstas */
+.voice-products-header.is-multiple {
+  font-weight: 400;
+  font-size: 16px; /* 1rem */
+  line-height: 150%; /* ~24px */
+  letter-spacing: 0.03em;
+
+  color: #fcfcfc;
+}
 .voice-products-grid {
   display: flex;
   flex-wrap: wrap;

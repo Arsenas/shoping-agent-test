@@ -53,7 +53,7 @@ export function ProductsStripVoice({ products, header, onAddToCart, onShowToast,
       <div className="voice-products-wrap">
         {/* Header */}
         {header && (
-          <div className="voice-products-header">
+          <div className={`voice-products-header ${single ? "is-single" : "is-multiple"}`}>
             <p>{header}</p>
           </div>
         )}

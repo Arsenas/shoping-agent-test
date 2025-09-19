@@ -32,8 +32,7 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
       role: "user",
       kind: "text",
       text: q,
-      // 👇 išsaugom iš kur žinutė
-      source: opts?.source ?? "chat",
+      source: opts?.source ?? "chat", // 👈 saugom iš kur žinutė
     } as Msg;
 
     const loaderId = uid();
@@ -60,6 +59,7 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
         role: "system",
         kind: "loading",
         target: isProductQuery ? "products" : "text",
+        source: userMsg.source, // 👈 forwardinam
       } as Msg,
     ]);
 
@@ -81,9 +81,18 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
     processedLoaderIds.add(loader.id);
     const q = (pendingQueries.get(loader.id) ?? "").toLowerCase();
 
-    // ⏳ pasirinkti delay: produktams 3s, tekstui numatytas
     const isProductsTarget = (loader as any).target === "products";
-    const waitMs = isProductsTarget ? 3000 : delayMs;
+    const source = (loader as any).source ?? "chat";
+
+    // 👇 skirtingi delay
+    let waitMs: number;
+    if (!isProductsTarget) {
+      waitMs = delayMs; // tekstui greitas
+    } else if (source === "voice") {
+      waitMs = 3000; // voice + products
+    } else {
+      waitMs = 900; // chat + products, galima keist testinimui
+    }
 
     const t = setTimeout(() => {
       pendingQueries.delete(loader!.id);
@@ -104,6 +113,7 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
       else if (q.includes("feedback")) scenario = "feedback";
       else if (q.includes("connection")) scenario = "connection";
       else if (q.includes("error")) scenario = "error";
+      else if (q.includes("tutorial")) scenario = "tutorial";
       else scenario = "default";
 
       // === Produktų scenarijai ===
@@ -245,17 +255,17 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
               } as Msg,
             ])
         );
-      } else {
+      } else if (scenario === "tutorial") {
         setMessages((prev) =>
           prev
             .filter((m) => m.id !== loader!.id)
             .concat([
               {
-                id: loader!.id + "-default",
+                id: loader!.id + "-tutorial",
                 role: "assistant",
                 kind: "text",
                 text:
-                  "This is a default text message. Try:\n" +
+                  "Here is the list of keywords you can try:\n" +
                   "- type 'one' → 1 product\n" +
                   "- type 'two' → 2 products\n" +
                   "- type 'three' → 3 products\n" +
@@ -271,6 +281,19 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
                   "- type 'feedback' → feedback screen\n" +
                   "- type 'connection' → connection lost\n" +
                   "- type 'error' → error message",
+              } as Msg,
+            ])
+        );
+      } else {
+        setMessages((prev) =>
+          prev
+            .filter((m) => m.id !== loader!.id)
+            .concat([
+              {
+                id: loader!.id + "-default",
+                role: "assistant",
+                kind: "text",
+                text: "This is a default message, for list of keywords type tutorial.",
               } as Msg,
             ])
         );
