@@ -1,15 +1,26 @@
-import { useState } from "react";
+// src/components/ProductsStrip/useProductsState.ts
+import { useState, useEffect } from "react";
 import type { Product } from "../../screens/ChatScreen";
 
 type Options = {
   onAddToCart?: (title: string, qty: number) => void;
   onShowToast?: (payload: { items: { title: string; qty: number }[] }) => void;
 };
-0;
-export function useProductsState({ onAddToCart, onShowToast }: Options) {
+
+export function useProductsState(
+  products: Product[], // dabar naudojam useEffect'e
+  { onAddToCart, onShowToast }: Options = {}
+) {
   const [muted, setMuted] = useState<Record<string, boolean>>({});
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+
+  //fiksuojam product list pasikeitimus, bet nieko nevalom
+  useEffect(() => {
+    // ateityje galima čia dėti logiką, pvz. sync su backend cart
+    // dabar tiesiog pasakom TS, kad products naudojamas
+    console.debug("Products list updated:", products.length);
+  }, [products]);
 
   const changeQty = (id: string, delta: number, product?: Product) => {
     setQuantities((prev) => {
@@ -20,10 +31,10 @@ export function useProductsState({ onAddToCart, onShowToast }: Options) {
         if (current === 0 && delta > 0) {
           onAddToCart?.(product.title, 1);
           onShowToast?.({ items: [{ title: product.title, qty: 1 }] });
-        } else if (next > 0) {
+        } else if (delta > 0) {
           onShowToast?.({ items: [{ title: product.title, qty: next }] });
-        } else if (next === 0) {
-          onShowToast?.({ items: [{ title: product.title, qty: 0 }] });
+        } else if (delta < 0) {
+          onShowToast?.({ items: [{ title: product.title, qty: next }] });
         }
       }
 

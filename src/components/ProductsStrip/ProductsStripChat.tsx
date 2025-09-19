@@ -37,10 +37,9 @@ export function ProductsStripChat({
   useDragScroll(scrollRef);
 
   const single = products.length === 1;
-  const many = products.length > 1 && !showMore;
   const more = !!showMore;
-  const alternative = !single && !many && !more && products.length > 1;
 
+  // 👇 auto scroll kai atsiranda naujų produktų ar CTA
   useEffect(() => {
     const chatLog = document.querySelector(".chat-log") as HTMLElement | null;
     if (chatLog) {

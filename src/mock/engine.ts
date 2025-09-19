@@ -27,10 +27,17 @@ export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: De
     const q = text.trim();
     if (!q) return;
 
-    const userMsg: Msg = { id: uid(), role: "user", kind: "text", text: q };
+    const userMsg: Msg = {
+      id: uid(),
+      role: "user",
+      kind: "text",
+      text: q,
+      // 👇 išsaugom iš kur žinutė
+      source: opts?.source ?? "chat",
+    } as Msg;
+
     const loaderId = uid();
 
-    // 🔑 Nustatome target: "products" arba "text"
     const isProductQuery = [
       "one",
       "two",
