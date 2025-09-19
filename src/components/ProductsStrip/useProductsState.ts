@@ -5,8 +5,8 @@ type Options = {
   onAddToCart?: (title: string, qty: number) => void;
   onShowToast?: (payload: { items: { title: string; qty: number }[] }) => void;
 };
-
-export function useProductsState(products: Product[], { onAddToCart, onShowToast }: Options) {
+0;
+export function useProductsState({ onAddToCart, onShowToast }: Options) {
   const [muted, setMuted] = useState<Record<string, boolean>>({});
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [quantities, setQuantities] = useState<Record<string, number>>({});

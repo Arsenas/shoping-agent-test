@@ -23,7 +23,7 @@ export function sentenceFor(c: Category) {
 export function createMockEngine({ setMessages, getProducts, delayMs = 900 }: Deps) {
   const products = () => (getProducts ? getProducts() : MOCK_PRODUCTS);
 
-  function send(text: string) {
+  function send(text: string, opts?: { source?: "chat" | "voice" }) {
     const q = text.trim();
     if (!q) return;
 

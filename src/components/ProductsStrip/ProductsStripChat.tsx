@@ -164,16 +164,15 @@ export function ProductsStripChat({
       ))}
 
       <div className="products-contain">
-        {more && (
-          <p className="products-header products-header-more">
-            Showing Top {groups.flat().length} best matching results:
-          </p>
-        )}
-
         {!single && showMore && groups.flat().length < products.length && (
           <button className="show-more-btn" onClick={handleShowMore}>
             Show more options
           </button>
+        )}
+        {more && (
+          <p className="products-header products-header-more">
+            Showing Top {groups.flat().length} best matching results.
+          </p>
         )}
 
         {single && !ctaDismissed && (
