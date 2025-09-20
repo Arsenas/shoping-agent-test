@@ -192,6 +192,14 @@
     display: none;
   }
 }
+
+html.ios-kb-open .modal-head {
+  padding-top: calc(1.625rem + 15rem);
+}
+
+html.ios-kb-open .modal-title {
+  margin-top: calc(clamp(3rem, 15vh, 8rem) + 5rem);
+}
 /* ==========================================================================
    6. Body
    ========================================================================== */
