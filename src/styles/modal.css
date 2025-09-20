@@ -193,12 +193,13 @@
   }
 }
 
+/* iOS keyboard adjustments */
 html.ios-kb-open .modal-head {
-  padding-top: calc(1.625rem + 15rem);
+  padding-top: calc(1.625rem + 15rem) !important;
 }
 
 html.ios-kb-open .modal-title {
-  margin-top: calc(clamp(3rem, 15vh, 8rem) + 5rem);
+  margin-top: calc(clamp(3rem, 15vh, 8rem) + 5rem) !important;
 }
 /* ==========================================================================
    6. Body
