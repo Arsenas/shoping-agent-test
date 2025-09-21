@@ -13,7 +13,13 @@ type Props = {
   extraClass?: string; // 👈 leidžia perduoti pvz. "listening"
 };
 
-function ModalScreen({ show, children }: { show: boolean; children: ReactNode }) {
+function ModalScreen({
+  show,
+  children,
+}: {
+  show: boolean;
+  children: ReactNode;
+}) {
   if (!show) return null;
   return <>{children}</>;
 }
@@ -68,24 +74,6 @@ export default function Modal({
     return () => ro.disconnect();
   }, []);
 
-  // 🟦 Detect iOS keyboard open/close
-  useEffect(() => {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    if (!isIOS) return;
-
-    const root = document.documentElement;
-    const handleFocusIn = () => root.classList.add("ios-kb-open");
-    const handleFocusOut = () => root.classList.remove("ios-kb-open");
-
-    window.addEventListener("focusin", handleFocusIn);
-    window.addEventListener("focusout", handleFocusOut);
-
-    return () => {
-      window.removeEventListener("focusin", handleFocusIn);
-      window.removeEventListener("focusout", handleFocusOut);
-    };
-  }, []);
-
   const labelProps =
     mode === "answer"
       ? {
@@ -94,11 +82,29 @@ export default function Modal({
       : { "aria-labelledby": "modal-title" };
 
   return (
-    <dialog id="ai-modal" ref={dlgRef} className="modal-root" {...labelProps} onClick={onClose}>
-      <div className={`modal-card ${extraClass}`} onClick={(e) => e.stopPropagation()}>
+    <dialog
+      id="ai-modal"
+      ref={dlgRef}
+      className="modal-root"
+      {...labelProps}
+      onClick={onClose}
+    >
+      <div
+        className={`modal-card ${extraClass}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-ctr">
-          <div className="modal-head" role="toolbar" aria-label="AI modal navigation" ref={headRef}>
-            <button type="button" className="head-logo-mobile" onClick={onBack ?? onClose}>
+          <div
+            className="modal-head"
+            role="toolbar"
+            aria-label="AI modal navigation"
+            ref={headRef}
+          >
+            <button
+              type="button"
+              className="head-logo-mobile"
+              onClick={onBack ?? onClose}
+            >
               <img src="/img/logo-mobile.svg" alt="Alcemi" />
             </button>
 
@@ -109,7 +115,11 @@ export default function Modal({
             <div className="head-spacer" />
 
             {/* 611–790px: Powered by mobile logo headeryje */}
-            <img className="powered-by powered-by--head" src="/img/logo-mobile.svg" alt="Powered by Alcemi" />
+            <img
+              className="powered-by powered-by--head"
+              src="/img/logo-mobile.svg"
+              alt="Powered by Alcemi"
+            />
 
             {rightSlot}
 
@@ -129,11 +139,31 @@ export default function Modal({
 
           {/* ≥790px: Powered by desktop logo footeryje */}
           <div className="modal-footer">
-            <img className="powered-by powered-by--footer" src="/img/logo-desktop.svg" alt="Powered by Alcemi" />
+            <img
+              className="powered-by powered-by--footer"
+              src="/img/logo-desktop.svg"
+              alt="Powered by Alcemi"
+            />
           </div>
         </div>
 
         <div id="modal-overlays" aria-hidden />
+        {/* <picture>
+          <source
+            srcSet="/img/background-gradient-mobile.svg"
+            media="(max-width: 609px)"
+          />
+          <source
+            srcSet="/img/background-gradient-desktop.svg"
+            media="(min-width: 610px)"
+          />
+          <img
+            className="background-gradient"
+            src="/img/background-gradient-mobile.svg"
+            alt=""
+            aria-hidden="true"
+          />
+        </picture> */}
       </div>
     </dialog>
   );
