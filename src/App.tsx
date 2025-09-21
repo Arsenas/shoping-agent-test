@@ -49,29 +49,26 @@ export default function App() {
       return;
     }
     const vv = (window as any).visualViewport as VisualViewport | undefined;
-    if (!vv) return;
-
+    const THRESHOLD = 240;
+    let base = vv ? vv.height : window.innerHeight;
     const update = () => {
-      const keyboardOpen = vv.height < window.innerHeight - 150; // slenkstis
-      if (keyboardOpen) {
-        root.classList.add("kb-open");
-        // 👇 užrašom CSS kintamąjį, kiek klaviatūra sumažino
-        root.style.setProperty("--kb-offset", `${window.innerHeight - vv.height}px`);
-      } else {
-        root.classList.remove("kb-open");
-        root.style.removeProperty("--kb-offset");
-      }
+      const h = vv ? vv.height : window.innerHeight;
+      const delta = base - h;
+      if (delta > THRESHOLD) root.classList.add("kb-open");
+      else root.classList.remove("kb-open");
     };
-
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update); // iOS kartais triggerina scroll
+    const refreshBase = () => {
+      base = vv ? vv.height : window.innerHeight;
+    };
     update();
-
+    window.addEventListener("resize", refreshBase);
+    vv?.addEventListener("resize", update);
+    vv?.addEventListener("scroll", update);
     return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
+      window.removeEventListener("resize", refreshBase);
+      vv?.removeEventListener("resize", update);
+      vv?.removeEventListener("scroll", update);
       root.classList.remove("kb-open");
-      root.style.removeProperty("--kb-offset");
     };
   }, [open]);
 
