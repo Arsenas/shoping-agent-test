@@ -116,9 +116,12 @@ export type Product = {
 
 //---- toast state---//
 export type ToastPayload = {
-  items: { title: string; qty: number; delta?: number }[];
+  items: {
+    title: string;
+    qty: number;
+    status: "added" | "removed"; // 👈 būtinas status
+  }[];
 };
-
 // ===== Static data (chips) =====
 export const CHIP_ITEMS: Category[] = [
   "Product information",

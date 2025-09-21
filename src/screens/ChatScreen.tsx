@@ -1,10 +1,9 @@
-// ChatScreen.tsx
+// src/screens/ChatScreen.tsx
 import { useRef, useMemo, useEffect, useState } from "react";
 import "../styles/chat-screen.css";
-import type { Msg } from "../types";
+import type { Msg, ToastPayload } from "../types";
 import MessageRenderer from "../components/MessageRenderer";
 import { useChatScroll } from "../hooks/useChatScroll";
-import type { ToastPayload } from "../components/MessageRenderer";
 
 export type Product = {
   id: string;
@@ -34,7 +33,6 @@ export default function ChatScreen({ messages, extra, onAddToCart, onRetry }: Ch
   const logRef = useRef<HTMLDivElement>(null);
   const [toastList, setToastList] = useState<Toast[]>([]);
   const timersRef = useRef<Record<string, NodeJS.Timeout>>({});
-  const lastQtyRef = useRef<Record<string, number>>({});
 
   const uniqueMessages = useMemo(() => {
     const seen = new Set<string>();
@@ -46,12 +44,10 @@ export default function ChatScreen({ messages, extra, onAddToCart, onRetry }: Ch
   }, [messages]);
 
   const { showHeadFade, showFootFade } = useChatScroll(logRef, uniqueMessages);
-
   const lastUser = [...messages].reverse().find((m) => m.role === "user" && m.kind === "text");
 
   const scheduleRemove = (id: string) => {
     setToastList((prev) => prev.map((t) => (t.id === id ? { ...t, exiting: true } : t)));
-
     setTimeout(() => {
       setToastList((prev) => prev.filter((t) => t.id !== id));
     }, 400);
@@ -59,41 +55,40 @@ export default function ChatScreen({ messages, extra, onAddToCart, onRetry }: Ch
 
   const handleShowToast = (payload: ToastPayload) => {
     payload.items.forEach((item) => {
-      const prevQty = lastQtyRef.current[item.title] ?? 0;
-      const delta = item.qty - prevQty;
+      setToastList((prev) => {
+        const status: "added" | "removed" = item.status;
+        let existing = prev.find((t) => t.title === item.title && t.status === status);
+        let next = prev.filter((t) => t.id !== existing?.id);
 
-      if (delta !== 0) {
-        setToastList((prev) => {
-          const status: "added" | "removed" = delta > 0 ? "added" : "removed";
-          let existing = prev.find((t) => t.title === item.title && t.status === status);
-          let next = prev.filter((t) => t.id !== existing?.id);
-
-          if (existing) {
+        if (existing) {
+          if (status === "added") {
+            // ✅ Added – rodom bendrą kiekį iš state
             existing = { ...existing, qty: item.qty, exiting: false };
           } else {
-            existing = {
-              id: Math.random().toString(36).slice(2),
-              title: item.title,
-              qty: Math.abs(delta),
-              status,
-            };
+            // ✅ Removed – kaupiam pašalintų kiekį
+            existing = { ...existing, qty: existing.qty + item.qty, exiting: false };
           }
+        } else {
+          existing = {
+            id: Math.random().toString(36).slice(2),
+            title: item.title,
+            qty: item.qty,
+            status,
+          };
+        }
 
-          next = [existing, ...next].slice(0, 3);
+        next = [existing, ...next].slice(0, 3);
 
-          if (timersRef.current[existing.id]) {
-            clearTimeout(timersRef.current[existing.id]);
-          }
-          timersRef.current[existing.id] = setTimeout(() => {
-            scheduleRemove(existing!.id);
-            delete timersRef.current[existing!.id];
-          }, 3400);
+        if (timersRef.current[existing.id]) {
+          clearTimeout(timersRef.current[existing.id]);
+        }
+        timersRef.current[existing.id] = setTimeout(() => {
+          scheduleRemove(existing!.id);
+          delete timersRef.current[existing!.id];
+        }, 3400);
 
-          return next;
-        });
-      }
-
-      lastQtyRef.current[item.title] = item.qty;
+        return next;
+      });
     });
   };
 
@@ -150,8 +145,8 @@ export default function ChatScreen({ messages, extra, onAddToCart, onRetry }: Ch
       {/* Toast stack */}
       <div className="toast-stack">
         {toastList.map((t, i) => {
-          const offsetY = -(i * 12); // kiekvienas toast pasislenka aukštyn
-          const opacity = 1 - i * 0.25; // mažėja opacity
+          const offsetY = -(i * 12);
+          const opacity = 1 - i * 0.25;
           return (
             <div
               key={t.id}
