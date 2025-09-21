@@ -82,9 +82,9 @@
 
 /* Kai mobile atidaryta keyboard → karuselė */
 html.kb-open .chips-inline {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  overflow-x: visible;
+  white-space: normal;
   gap: var(--space-4, 1rem);
   padding: var(--space-2, 0.5rem) 1.75rem;
   -webkit-overflow-scrolling: touch;
