@@ -80,20 +80,19 @@
   margin: 0;
 }
 
-/* Kai mobile atidaryta keyboard */
-
 html.kb-open .modal-title {
   padding-top: 10rem;
 }
+/* Kai mobile atidaryta keyboard → karuselė */
 html.kb-open .chips-inline {
-  flex-wrap: wrap;
-  overflow-x: visible;
-  white-space: normal;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  white-space: nowrap;
   gap: var(--space-4, 1rem);
   padding: var(--space-2, 0.5rem) 1.75rem;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  justify-content: center;
+  justify-content: flex-start;
 }
 html.kb-open .chips-inline::-webkit-scrollbar {
   display: none;
