@@ -70,6 +70,8 @@
   margin-right: -2rem;
   padding-right: 2rem;
   justify-content: flex-start;
+  display: flex;
+  flex-wrap: wrap; /* leidžia chipams peršokti į kitą eilutę */
 }
 
 /* support text be padding-bottom – tarpelį daro ::after */
